@@ -1,51 +1,18 @@
 // Sidebar.jsx
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { AiOutlineHome, AiOutlineLogout } from "react-icons/ai";
 import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { logout } from "../../store/auth/authSlice";
-import { selectMyPermissions } from "../../store/permissions/permissionsSlice";
 import { HiOutlineMenu, HiX } from "react-icons/hi";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LuUserPlus } from "react-icons/lu";
-import { 
-  CircleUser as LuCircleUser, 
-  Shield as LuShield, 
-  Settings2 as LuSettings2,   
-  Building2 as LuBuilding2
-} from "lucide-react";
-import api from "@/api/axios";
 import { appConfig } from "@/config/appConfig";
 
 export default function Sidebar() {
   const dispatch = useDispatch();
   const location = useLocation();
-  const myPermissions = useSelector(selectMyPermissions) || [];
-  // user still available if you want avatar later
-  const user = useSelector((state) => state.auth.user) || {};
-  console.log(user);
-
-  const userRoles = (() => {
-    if (!user) return [];
-    // case 1: user.role is an object { name: 'SuperAdmin' }
-    if (user.role && user.role.name) return [String(user.role.name)];
-    // case 2: user.role is string 'SuperAdmin'
-    if (user.role && typeof user.role === "string") return [user.role];
-    // case 3: user.roles is array of role names or objects
-    if (Array.isArray(user.roles)) {
-      return user.roles
-        .map((r) => (typeof r === "string" ? r : r.name || r.roleName))
-        .filter(Boolean);
-    }
-    return [];
-  })();
-
-  const isHiddenForUser = (item) => {
-    if (!item.hideForRoles || item.hideForRoles.length === 0) return false;
-    const hideList = item.hideForRoles.map((r) => String(r).toLowerCase());
-    return userRoles.some((ur) => hideList.includes(String(ur).toLowerCase()));
-  };
 
   // UI state for expanded menus
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -74,11 +41,7 @@ export default function Sidebar() {
     } catch { }
   }, [collapsed]);
 
-  // convenience permission check
-  const hasAny = (required = []) => {
-    if (!required || required.length === 0) return true;
-    return required.some((p) => myPermissions.includes(p));
-  };
+  const hasAny = () => true;
 
   // Menu structure (main items and optional subItems)
   // keep icons and keys here — labels will only show when expanded
@@ -93,14 +56,6 @@ export default function Sidebar() {
     },
     
    
-    
-    {
-      key: "roles",
-      label: "Roles & Permissions",
-      to: "/roles",
-      icon: <LuShield className="text-lg" />,
-      perms: ["role.read"],
-    },
     
   {
       key: "candidates",
@@ -150,7 +105,6 @@ export default function Sidebar() {
         <nav className="h-full overflow-y-auto px-4 py-6 pb-20">
           <ul className="space-y-2">
             {menu.map((m) => {
-              if (isHiddenForUser(m)) return null;
               if (!hasAny(m.perms)) return null;
               const topHasSub = Array.isArray(m.subItems) && m.subItems.length > 0;
               const active = isActive(m.to);
@@ -251,7 +205,6 @@ export default function Sidebar() {
         <nav className="flex-1 px-2 py-4 overflow-auto">
           <ul className="space-y-1">
             {menu.map((m) => {
-              if (isHiddenForUser(m)) return null;
               if (!hasAny(m.perms)) return null;
               const topHasSub =
                 Array.isArray(m.subItems) && m.subItems.length > 0;
@@ -295,12 +248,6 @@ export default function Sidebar() {
                           {m.icon || <CiMail className="text-xl" />}
                         </div>
                       )}
-                      {(() => {
-                        const c = m.key === 'leave' ? badgeCounts.leaves : (m.key === 'leave-approval' ? badgeCounts.approvals : 0);
-                        return c > 0 ? (
-                          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-600 ring-2 ring-white" />
-                        ) : null;
-                      })()}
                     </div>
 
                     {/* Link / label area */}

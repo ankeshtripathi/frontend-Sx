@@ -1,18 +1,7 @@
 // src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import api from '../../api/axios'
+import api, { getApiErrorMessage, unwrapApiData } from '../../api/axios'
 import { setPermissions } from '../permissions/permissionsSlice'
-
-// normalize permission payloads
-const normalizePermissions = (perms) => {
-  if (!perms) return []
-  if (Array.isArray(perms)) {
-    return perms.map((p) => (typeof p === 'string' ? p : p?.name || p?.displayName || String(p)))
-  }
-  if (typeof perms === 'string') return [perms]
-  if (perms?.name) return [perms.name]
-  return [String(perms)]
-}
 
 // decode JWT safely (base64url)
 const decodeJwt = (token) => {
@@ -51,48 +40,26 @@ const extractTokenString = (resData) => {
   return null
 }
 
-// login thunk
 export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }, { rejectWithValue, dispatch }) => {
     try {
       const res = await api.post('/auth/login', { email, password })
-      const data = res.data
-      console.log('login response:', data)
+      const data = unwrapApiData(res)
 
       const token = extractTokenString(data)
       if (!token) {
-        // if server didn't provide token string, but set cookie, we may still be able to fetch /auth/me
-        console.warn('No access token found in login response. If your server uses cookies, this may be OK.')
+        throw new Error('Login response did not include an access token')
       } else {
-        // persist raw token string only
-        console.log("local set token", token);
-        // Update localStorage token key from 'accessToken' to 'LMS_accessToken'
         localStorage.setItem('LMS_accessToken', token)
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`
       }
 
-      // user may be provided
-      const user = data.user || (data?.data && data.data.user) || null
+      dispatch(setPermissions([]))
 
-      // fetch permissions from backend (prefer explicit endpoint)
-      try {
-        const p = await api.get('/auth/permissions')
-        const perms = p.data?.permissions || p.data || []
-        console.log('Fetched permissions:', perms)
-        const normalized = normalizePermissions(perms)
-        dispatch(setPermissions(normalized))
-      } catch (permErr) {
-        console.error('Failed to fetch permissions endpoint after login:', permErr)
-        // fallback to token claims
-        const claimPerms = normalizePermissions(decodeJwt(localStorage.getItem('LMS_accessToken'))?.permissions || decodeJwt(localStorage.getItem('LMS_accessToken'))?.perms || [])
-        dispatch(setPermissions(claimPerms))
-      }
-
-      return { user }
+      return { user: data.user || decodeJwt(token) || null }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Login failed'
-      return rejectWithValue(msg)
+      return rejectWithValue(getApiErrorMessage(err, 'Login failed'))
     }
   }
 )
@@ -100,67 +67,35 @@ export const login = createAsyncThunk(
 // restoreSession thunk
 export const restoreSession = createAsyncThunk(
   'auth/restoreSession',
-  async (_, { rejectWithValue, dispatch }) => {
+  async (_, { dispatch }) => {
     try {
       const token = localStorage.getItem('LMS_accessToken')
       if (!token) {
-        // no token stored -> nothing to restore
         return null
       }
 
-      // If token is expired, clear and bail
       if (isTokenExpired(token)) {
-        console.warn('Stored access token is expired; clearing.')
         localStorage.removeItem('LMS_accessToken')
         return null
       }
 
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      dispatch(setPermissions([]))
 
-      // try to fetch user and permissions from backend
-      try {
-        const [userRes, permsRes] = await Promise.all([api.get('/auth/me'), api.get('/auth/permissions')])
-        const userData = userRes.data?.user || userRes.data
-        const permsData = permsRes.data?.permissions || permsRes.data || []
-        const normalized = normalizePermissions(permsData)
-        dispatch(setPermissions(normalized))
-
-        // Accept user data if it contains at least one identifying field
-        if (!userData || (!userData.email && !userData.id && !userData.name)) {
-          throw new Error('Invalid user data received from /auth/me')
-        }
-        return userData
-      } catch (backendErr) {
-        console.warn('Failed to restore from backend endpoints, falling back to JWT claims:', backendErr)
-        // fallback: try to read minimal info from token claims
-        const claims = decodeJwt(token) || {}
-        const claimPerms = normalizePermissions(claims.permissions || claims.perms || claims.roles || [])
-        dispatch(setPermissions(claimPerms))
-
-        // if token contains a user-like claim, use it
-        const maybeUser = claims.user || claims.sub || claims.email ? {
-          email: claims.email || claims.sub || null,
-          name: claims.name || claims.username || null,
-        } : null
-
-        if (maybeUser && maybeUser.email) return maybeUser
-
-        // otherwise we couldn't restore
-        localStorage.removeItem('LMS_accessToken')
-        return rejectWithValue(null)
+      const claims = decodeJwt(token) || {}
+      return {
+        id: claims.userId || claims.sub || null,
+        tenantId: claims.tenantId || null,
       }
     } catch (err) {
-      console.error('Failed to restore session (unexpected):', err)
       localStorage.removeItem('LMS_accessToken')
-      return rejectWithValue(null)
+      return null
     }
   }
 )
 
-// logout (unchanged)
 export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
-  // Frontend-only logout: clear token and permissions, no backend call
-  try { localStorage.removeItem('LMS_accessToken') } catch (_) { }
+  localStorage.removeItem('LMS_accessToken')
   if (api?.defaults?.headers?.common) {
     delete api.defaults.headers.common['Authorization']
   }
