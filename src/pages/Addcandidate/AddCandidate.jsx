@@ -25,8 +25,9 @@ const AddCandidate = () => {
       setLoading(true);
       setError("");
       try {
-        const data = await getCandidates();
-        setCandidates(Array.isArray(data) ? data : []);
+        const data = await getCandidates({ page: 1, limit: 25 });
+        const items = Array.isArray(data?.items) ? data.items : [];
+        setCandidates(items);
       } catch (err) {
         console.error("Failed to fetch candidates", err);
         setError("Failed to fetch candidates.");

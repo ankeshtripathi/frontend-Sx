@@ -6,9 +6,23 @@ export async function createCandidate(payload) {
   return unwrapApiData(res);
 }
 
-export async function getCandidates() {
-  const res = await api.get("/candidates");
+/**
+ * List candidates with server pagination and filters.
+ * @param {Record<string, unknown>} [params] — page, limit, search, location, skills, etc.
+ * @returns {Promise<{ items: object[], pagination: { page, limit, total, totalPages } }>}
+ */
+export async function getCandidates(params = {}) {
+  const res = await api.get("/candidates", { params: stripEmptyParams(params) });
   return unwrapApiData(res);
+}
+
+function stripEmptyParams(raw) {
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (v === undefined || v === null || v === "") continue;
+    out[k] = v;
+  }
+  return out;
 }
 
 export async function uploadResumes(files) {
@@ -30,9 +44,20 @@ export async function uploadCsv(file) {
   return unwrapApiData(res);
 }
 
-export async function matchJD(file) {
+/**
+ * Match candidates against an uploaded JD file (no persisted job).
+ * @param {File} file
+ * @param {{ topK?: number, skills?: string }} [options]
+ */
+export async function matchJD(file, options = {}) {
   const formData = new FormData();
   formData.append("jd", file);
+  if (options.topK != null && options.topK !== "") {
+    formData.append("topK", String(options.topK));
+  }
+  if (options.skills != null && String(options.skills).trim() !== "") {
+    formData.append("skills", String(options.skills).trim());
+  }
 
   const res = await api.post("/candidates/match/jd", formData);
   return unwrapApiData(res);

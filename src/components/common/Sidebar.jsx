@@ -7,7 +7,7 @@ import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
 import { logout } from "../../store/auth/authSlice";
 import { HiOutlineMenu, HiX } from "react-icons/hi";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LuUserPlus } from "react-icons/lu";
+import { LuUserPlus, LuBriefcase } from "react-icons/lu";
 import { appConfig } from "@/config/appConfig";
 
 export default function Sidebar() {
@@ -72,9 +72,13 @@ export default function Sidebar() {
       icon: <LuUserPlus className="text-lg" />,
       perms: [],
     },
-    
-  
-    
+    {
+      key: "jobs-match",
+      label: "Jobs & match",
+      to: "/dashboard/jobs",
+      icon: <LuBriefcase className="text-lg" />,
+      perms: [],
+    },
   ];
 
   // helper to check active path
