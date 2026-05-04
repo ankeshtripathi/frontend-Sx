@@ -65,7 +65,13 @@ export default function Sidebar() {
       perms: ["candidate.read"],
     },
     
-    
+     {
+      key: "get-candidates",
+      label: "Get Candidates",
+      to: "/dashboard/get-candidates",
+      icon: <LuUserPlus className="text-lg" />,
+      perms: [],
+    },
     
   
     

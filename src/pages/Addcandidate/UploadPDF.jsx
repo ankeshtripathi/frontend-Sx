@@ -5,39 +5,49 @@ import { getJobStatus, uploadResumes } from "@/api/candidate";
 
 const UploadPDF = () => {
   const pollRef = useRef(null);
+
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [job, setJob] = useState(null);
+  const [job, setJob] = useState(null); // FULL RESPONSE
   const [error, setError] = useState("");
 
   const finishedStatuses = new Set(["completed", "failed"]);
 
-  useEffect(() => () => {
-    if (pollRef.current) clearInterval(pollRef.current);
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
+  // ✅ FETCH STATUS
   const fetchStatus = async (jobId) => {
-    const data = await getJobStatus(jobId);
-    setJob(data);
+    const res = await getJobStatus(jobId);
 
-    if (finishedStatuses.has(data?.status) && pollRef.current) {
+    setJob(res); // keep full response
+
+    const status = res?.data?.status;
+
+    if (finishedStatuses.has(status) && pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
   };
 
+  // ✅ POLLING
   const startPolling = (jobId) => {
     if (pollRef.current) clearInterval(pollRef.current);
+
     pollRef.current = setInterval(() => {
       fetchStatus(jobId).catch((err) => {
-        console.error("Status polling failed", err);
+        console.error("Polling failed", err);
       });
     }, 3000);
   };
 
+  // ✅ UPLOAD
   const handleUpload = async () => {
     if (!files.length) {
-      toast.error("Please select resume files");
+      toast.error("Please select files");
       return;
     }
 
@@ -45,13 +55,17 @@ const UploadPDF = () => {
     setError("");
 
     try {
-      const data = await uploadResumes(files);
-      setJob(data);
-      toast.success("Resume upload queued");
-      startPolling(data.jobId);
-      await fetchStatus(data.jobId);
+      const res = await uploadResumes(files);
+
+      setJob(res);
+      toast.success("Upload started");
+
+      const jobId = res?.data?.id || res?.jobId;
+
+      startPolling(jobId);
+      await fetchStatus(jobId);
     } catch (err) {
-      const message = getApiErrorMessage(err, "Resume upload failed");
+      const message = getApiErrorMessage(err, "Upload failed");
       setError(message);
       toast.error(message);
     } finally {
@@ -59,106 +73,141 @@ const UploadPDF = () => {
     }
   };
 
-  const progress = job?.total ? Math.round(((job.processed || 0) / job.total) * 100) : 0;
+  // ✅ SAFE DATA ACCESS
+  const data = job?.data;
+
+  const progress = data?.total
+    ? Math.round(((data.processed || 0) / data.total) * 100)
+    : 0;
 
   return (
-    <div className="p-6 max-w-4xl">
-      <h2 className="text-xl font-semibold mb-2">Bulk Resume Upload</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Upload up to 20 PDF, DOC, DOCX, or TXT resumes. The backend returns a job id and processes them in the worker.
-      </p>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <h2 className="text-2xl font-bold">Resume Upload Dashboard</h2>
 
+      {/* FILE INPUT */}
       <input
         type="file"
-        accept=".pdf,.doc,.docx,.txt"
         multiple
         onChange={(e) => setFiles(Array.from(e.target.files || []))}
-        className="mb-4"
       />
 
       {files.length > 0 && (
-        <div className="mb-4 text-sm text-gray-600">
-          Selected {files.length} file{files.length === 1 ? "" : "s"}.
-        </div>
+        <p className="text-sm text-gray-500">
+          {files.length} files selected
+        </p>
       )}
 
-      {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {/* ERROR */}
+      {error && <p className="text-red-500">{error}</p>}
 
+      {/* BUTTON */}
       <button
         onClick={handleUpload}
-        disabled={uploading || !files.length}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={uploading}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
       >
-        {uploading ? "Queueing..." : "Upload Resumes"}
+        {uploading ? "Uploading..." : "Upload"}
       </button>
 
-      {job && (
-        <div className="mt-6 rounded border bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+      {/* JOB DASHBOARD */}
+      {data && (
+        <div className="bg-white p-5 rounded-xl shadow space-y-5">
+
+          {/* HEADER */}
+          <div className="flex justify-between">
             <div>
-              <div className="text-sm text-gray-500">Job ID</div>
-              <div className="font-mono text-sm">{job.jobId || job.id}</div>
+              <p className="text-sm text-gray-500">Job ID</p>
+              <p className="font-mono">{data.id}</p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              {job.status}
+
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full">
+              {data.status}
             </span>
           </div>
 
-          <div className="mt-4">
-            <div className="mb-1 flex justify-between text-sm text-gray-600">
-              <span>{job.processed || 0} / {job.total || 0} processed</span>
+          {/* PROGRESS */}
+          <div>
+            <div className="flex justify-between text-sm">
+              <span>{data.processed} / {data.total}</span>
               <span>{progress}%</span>
             </div>
-            <div className="h-2 rounded bg-gray-100">
-              <div className="h-2 rounded bg-blue-600" style={{ width: `${progress}%` }} />
+
+            <div className="h-3 bg-gray-200 rounded">
+              <div
+                className="h-3 bg-blue-600 rounded"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 text-sm md:grid-cols-3">
-            <Stat label="Created" value={job.created || 0} />
-            <Stat label="Duplicate" value={job.duplicate || 0} />
-            <Stat label="Errors" value={job.error || 0} />
+          {/* STATS */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <Stat label="Total" value={data.total} />
+            <Stat label="Processed" value={data.processed} />
+            <Stat label="Created" value={data.created} />
+            <Stat label="Duplicate" value={data.duplicate} />
+            <Stat label="Skipped" value={data.skipped} />
+            <Stat label="Error" value={data.error} />
           </div>
 
-          {Array.isArray(job.results) && job.results.length > 0 && (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
+          {/* RESULTS TABLE */}
+          {data.results?.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border">
                 <thead>
-                  <tr className="border-b text-left text-gray-500">
-                    <th className="py-2 pr-4">File</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 pr-4">Message</th>
+                  <tr className="bg-gray-100">
+                    <th className="p-2 border">Row</th>
+                    <th className="p-2 border">File</th>
+                    <th className="p-2 border">Status</th>
+                    <th className="p-2 border">Resume</th>
+                    <th className="p-2 border">Candidate</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {job.results.map((result, index) => (
-                    <tr key={`${result.fileName || "file"}-${index}`} className="border-b last:border-0">
-                      <td className="py-2 pr-4">{result.fileName}</td>
-                      <td className="py-2 pr-4">{result.status}</td>
-                      <td className="py-2 pr-4">{result.reason || result.error || "-"}</td>
+                  {data.results.map((r, i) => (
+                    <tr key={i} className="text-center">
+                      <td className="p-2 border">{r.row}</td>
+                      <td className="p-2 border">{r.fileName}</td>
+                      <td className="p-2 border">{r.status}</td>
+
+                      <td className="p-2 border">
+                        <a
+                          href={r.resumeUrl}
+                          target="_blank"
+                          className="text-blue-600 underline"
+                        >
+                          View
+                        </a>
+                      </td>
+
+                      <td className="p-2 border">
+                        {r.candidateId}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+
+          {/* TIMELINE */}
+          <div className="text-sm text-gray-500">
+            <p>Created: {new Date(data.createdAt).toLocaleString()}</p>
+            <p>Updated: {new Date(data.updatedAt).toLocaleString()}</p>
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-function Stat({ label, value }) {
-  return (
-    <div className="rounded bg-gray-50 p-3">
-      <div className="text-gray-500">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
-    </div>
-  );
-}
+// STAT COMPONENT
+const Stat = ({ label, value }) => (
+  <div className="bg-gray-50 p-3 rounded text-center">
+    <p className="text-gray-500 text-sm">{label}</p>
+    <p className="text-lg font-semibold">{value}</p>
+  </div>
+);
 
 export default UploadPDF;

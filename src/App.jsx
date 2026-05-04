@@ -10,6 +10,7 @@ import Layout from './layout/Layout';
 import AddCandidate from './pages/Addcandidate/AddCandidate';
 import UploadPDF from './pages/Addcandidate/UploadPDF';
 import UploadCSV from './pages/Addcandidate/UploadCSV';  
+import GetCandidate from './pages/Addcandidate/GetCandidate';
 
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/dashboard/candidates" element={<AddCandidate />} />
           <Route path="/candidate/upload-pdf" element={<UploadPDF />} />
           <Route path="/candidate/upload-csv" element={<UploadCSV />} />
+          <Route path="/dashboard/get-candidates" element={<GetCandidate />} />
         </Route>
       </Routes>
     </Suspense>
