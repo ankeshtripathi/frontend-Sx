@@ -61,7 +61,7 @@ const GetCandidate = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Candidate Dashboard</h1>
+     
 
       {error && (
         <p className="text-sm text-red-600" role="alert">
@@ -219,7 +219,12 @@ const GetCandidate = () => {
               {items.length > 0 ? (
                 items.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell>{c.name || "—"}</TableCell>
+                 <TableCell
+  className="cursor-pointer text-blue-600 hover:underline"
+  onClick={() => handlePreviewClick(c)}
+>
+  {c.name || "Unnamed"}
+</TableCell>
                     <TableCell>{c.email || "—"}</TableCell>
                     <TableCell>{c.phone || "—"}</TableCell>
                     <TableCell className="max-w-[140px] truncate">
@@ -284,100 +289,103 @@ const GetCandidate = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Candidate profile</DialogTitle>
-          </DialogHeader>
+     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+  <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-2xl">
 
-          {selectedCandidate && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="font-semibold text-gray-700">Name</p>
-                <p>{selectedCandidate.name || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Email</p>
-                <p>{selectedCandidate.email || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Phone</p>
-                <p>{selectedCandidate.phone || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Total experience</p>
-                <p>
-                  {selectedCandidate.totalExperienceYears != null
-                    ? `${selectedCandidate.totalExperienceYears} yrs`
-                    : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Current role</p>
-                <p>{selectedCandidate.currentDesignation || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Company</p>
-                <p>{selectedCandidate.currentCompany || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Industry</p>
-                <p>{selectedCandidate.industry || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Department</p>
-                <p>{selectedCandidate.department || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Qualification</p>
-                <p>{selectedCandidate.qualification || "—"}</p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Locations</p>
-                <p>
-                  Current: {selectedCandidate.currentLocation || "—"}
-                  <br />
-                  Preferred: {selectedCandidate.preferredLocation || "—"}
-                  <br />
-                  Hometown: {selectedCandidate.hometown || "—"} · Pincode:{" "}
-                  {selectedCandidate.pincode || "—"}
-                </p>
-              </div>
-              <div>
-                <p className="font-semibold text-gray-700">Salary / notice</p>
-                <p>
-                  Current: {selectedCandidate.currentSalary || "—"}
-                  <br />
-                  Expected: {selectedCandidate.expectedSalary || "—"}
-                  <br />
-                  Notice:{" "}
-                  {selectedCandidate.noticePeriodDays != null
-                    ? `${selectedCandidate.noticePeriodDays} days`
-                    : "—"}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="font-semibold text-gray-700">Skills</p>
-                <p className="whitespace-pre-wrap">{formatSkills(selectedCandidate.skills)}</p>
-              </div>
-              <div className="md:col-span-2">
-                {selectedCandidate.resumeUrl ? (
-                  <a
-                    href={selectedCandidate.resumeUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 underline"
-                  >
-                    Open resume file
-                  </a>
-                ) : (
-                  <span className="text-gray-500">No resume file URL</span>
-                )}
-              </div>
+    {selectedCandidate && (
+      <div className="flex flex-col h-[80vh]">
+
+        {/* 🔥 HEADER */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+          <h2 className="text-xl font-semibold">
+            {selectedCandidate.name || "Unnamed Candidate"}
+          </h2>
+          <p className="text-sm opacity-90">
+            {selectedCandidate.currentDesignation || "—"} •{" "}
+            {selectedCandidate.currentCompany || "—"}
+          </p>
+        </div>
+
+        {/* 🔥 BODY */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+
+          {/* BASIC INFO */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <InfoItem label="Email" value={selectedCandidate.email} />
+            <InfoItem label="Phone" value={selectedCandidate.phone} />
+            <InfoItem
+              label="Experience"
+              value={
+                selectedCandidate.totalExperienceYears
+                  ? `${selectedCandidate.totalExperienceYears} yrs`
+                  : "—"
+              }
+            />
+            <InfoItem label="Department" value={selectedCandidate.department} />
+          </div>
+
+          {/* PROFESSIONAL INFO */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-xl shadow-sm">
+            <InfoItem label="Industry" value={selectedCandidate.industry} />
+            <InfoItem label="Qualification" value={selectedCandidate.qualification} />
+            <InfoItem label="Current Salary" value={selectedCandidate.currentSalary} />
+            <InfoItem label="Expected Salary" value={selectedCandidate.expectedSalary} />
+          </div>
+
+          {/* LOCATION */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-gray-700">Location</h3>
+            <p className="text-sm text-gray-600">
+              <strong>Current:</strong> {selectedCandidate.currentLocation || "—"} <br />
+              <strong>Preferred:</strong> {selectedCandidate.preferredLocation || "—"} <br />
+              <strong>Hometown:</strong> {selectedCandidate.hometown || "—"} •{" "}
+              {selectedCandidate.pincode || "—"}
+            </p>
+          </div>
+
+          {/* SKILLS */}
+          <div className="bg-white p-4 rounded-xl shadow-sm">
+            <h3 className="font-semibold mb-2 text-gray-700">Skills</h3>
+            <div className="flex flex-wrap gap-2">
+              {(Array.isArray(selectedCandidate.skills)
+                ? selectedCandidate.skills
+                : String(selectedCandidate.skills || "")
+                    .split(",")
+                    .map((s) => s.trim())
+              ).map((skill, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full"
+                >
+                  {skill}
+                </span>
+              ))}
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+
+          {/* RESUME */}
+          <div className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+            <span className="text-sm text-gray-600">Resume</span>
+            {selectedCandidate.resumeUrl ? (
+              <a
+                href={selectedCandidate.resumeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                View Resume
+              </a>
+            ) : (
+              <span className="text-gray-400 text-sm">Not available</span>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+    )}
+  </DialogContent>
+</Dialog>
     </div>
   );
 };
