@@ -13,7 +13,7 @@ export default function Layout({ type = "public" }) {
   const shouldHide = hideOnRoutes.includes(location.pathname);
 
   return (
-    <div className="min-h-screen flex flex-col text-slate-100">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       {!shouldHide && <Navbar />}
 
       <main className="flex-1 min-h-[80vh]">

@@ -16,10 +16,13 @@ import JobsAndMatch from './pages/Jobs/JobsAndMatch';
 const LoginPage = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 
-function Spinner() {
+import { Spinner } from "@/components/ui/spinner";
+
+function FullPageSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
+    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-background text-muted-foreground">
+      <Spinner className="size-10 text-primary" />
+      <p className="text-sm font-medium">Loading…</p>
     </div>
   );
 }
@@ -33,11 +36,11 @@ export default function App() {
   }, [dispatch]);
 
   if (loading && !initialized) {
-    return <Spinner />;
+    return <FullPageSpinner />;
   }
 
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense fallback={<FullPageSpinner />}>
       <Routes>
         <Route path="login" element={<LoginPage />} />
 

@@ -12,25 +12,25 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto">
 
         {/* Container */}
-        <div className="bg-white/80 backdrop-blur-md border shadow-md rounded-2xl px-6 h-16 flex items-center justify-between">
+        <div className="border-border/80 bg-card/90 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-card/75 rounded-2xl border px-5 h-14 flex items-center justify-between">
 
           {/* Logo */}
           <div className="text-xl font-semibold tracking-tight flex items-center gap-1">
-            <img src="/logo.jpg" alt="logo" className="w-20 h-20" />
+            <img src="/logo.jpg" alt="logo" className="h-10 w-auto object-contain" />
           </div>
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition">
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
               Home
             </a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition">
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition">
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </a>
-            <a href="#" className="text-gray-700 hover:text-blue-600 transition">
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
               About
             </a>
           </nav>
@@ -42,13 +42,12 @@ const Navbar = () => {
            
            <Button
   variant="outline"
-  className="border-gray-300 text-gray-800 hover:bg-gray-100"
   onClick={() => navigate("/login")}
 >
   Login
 </Button>
 
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4">
+            <Button className="shadow-sm">
               Try it free →
             </Button>
 
@@ -56,7 +55,7 @@ const Navbar = () => {
 
           {/* Mobile Toggle */}
           <button
-            className="md:hidden text-gray-700"
+            className="md:hidden text-muted-foreground"
             onClick={() => setOpen(!open)}
           >
             {open ? <X size={24} /> : <Menu size={24} />}
@@ -66,28 +65,28 @@ const Navbar = () => {
 
         {/* ================= MOBILE MENU ================= */}
         {open && (
-          <div className="md:hidden mt-3 bg-white rounded-2xl shadow-lg border p-5 animate-in fade-in slide-in-from-top-3">
+          <div className="md:hidden mt-3 rounded-2xl border border-border bg-card p-5 shadow-lg">
 
             <nav className="flex flex-col gap-4 text-sm font-medium">
-              <a href="#" className="text-gray-700 hover:text-blue-600">
+              <a href="#" className="text-muted-foreground hover:text-foreground">
                 Home
               </a>
-              <a href="#" className="text-gray-700 hover:text-blue-600">
+              <a href="#" className="text-muted-foreground hover:text-foreground">
                 Features
               </a>
-              <a href="#" className="text-gray-700 hover:text-blue-600">
+              <a href="#" className="text-muted-foreground hover:text-foreground">
                 Pricing
               </a>
-              <a href="#" className="text-gray-700 hover:text-blue-600">
+              <a href="#" className="text-muted-foreground hover:text-foreground">
                 About
               </a>
             </nav>
 
             <div className="flex flex-col gap-3 mt-5">
-              <Button variant="outline">Login</Button>
-              <Button className="bg-blue-600 text-white">
-                Try it free →
+              <Button variant="outline" onClick={() => navigate("/login")}>
+                Login
               </Button>
+              <Button>Try it free →</Button>
             </div>
    
           </div>
