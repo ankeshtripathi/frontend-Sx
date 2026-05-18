@@ -30,6 +30,15 @@ export default function Sidebar() {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileMenuOpen]);
+
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem("lms_sidebarCollapsed") === "true";
@@ -55,6 +64,7 @@ export default function Sidebar() {
       to: "/dashboard",
       icon: Home,
       perms: [],
+      accent: "sky",
     },
     {
       key: "candidates",
@@ -62,6 +72,7 @@ export default function Sidebar() {
       to: "/dashboard/candidates",
       icon: UserPlus,
       perms: ["candidate.read"],
+      accent: "violet",
     },
     {
       key: "get-candidates",
@@ -69,6 +80,7 @@ export default function Sidebar() {
       to: "/dashboard/get-candidates",
       icon: Users,
       perms: [],
+      accent: "emerald",
     },
     {
       key: "jobs-match",
@@ -76,8 +88,32 @@ export default function Sidebar() {
       to: "/dashboard/jobs",
       icon: Briefcase,
       perms: [],
+      accent: "amber",
     },
   ];
+
+  const navAccent = {
+    sky: {
+      active: "border-sky-400/60 bg-sky-500/15",
+      icon: "bg-sky-500 text-white shadow-sky-500/40 shadow-sm",
+      idle: "bg-slate-800 text-slate-400 group-hover:bg-sky-500/20 group-hover:text-sky-300",
+    },
+    violet: {
+      active: "border-violet-400/60 bg-violet-500/15",
+      icon: "bg-violet-500 text-white shadow-violet-500/40 shadow-sm",
+      idle: "bg-slate-800 text-slate-400 group-hover:bg-violet-500/20 group-hover:text-violet-300",
+    },
+    emerald: {
+      active: "border-emerald-400/60 bg-emerald-500/15",
+      icon: "bg-emerald-500 text-white shadow-emerald-500/40 shadow-sm",
+      idle: "bg-slate-800 text-slate-400 group-hover:bg-emerald-500/20 group-hover:text-emerald-300",
+    },
+    amber: {
+      active: "border-amber-400/60 bg-amber-500/15",
+      icon: "bg-amber-500 text-white shadow-amber-500/40 shadow-sm",
+      idle: "bg-slate-800 text-slate-400 group-hover:bg-amber-500/20 group-hover:text-amber-300",
+    },
+  };
 
   const isActive = (to) => {
     if (!to || to === "#") return false;
@@ -95,27 +131,29 @@ export default function Sidebar() {
     const active = isActive(item.to);
     const topHasSub = Array.isArray(item.subItems) && item.subItems.length > 0;
 
+    const accent = navAccent[item.accent] || navAccent.sky;
+
     const inner = (
       <div
         className={cn(
-          "flex items-center gap-3 rounded-lg px-2 py-2 transition-colors",
+          "group flex items-center gap-3 rounded-xl border border-transparent px-2 py-2 transition-all",
           active
-            ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-            : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+            ? cn("border-l-[3px] pl-[5px] text-white shadow-sm", accent.active)
+            : "text-slate-400 hover:border-slate-700 hover:bg-slate-800/80 hover:text-slate-200"
         )}
       >
         <span
           className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-md border border-transparent",
-            active
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted/80 text-muted-foreground"
+            "flex size-9 shrink-0 items-center justify-center rounded-lg",
+            active ? accent.icon : accent.idle
           )}
         >
           <Icon className="size-4" aria-hidden />
         </span>
         {!collapsed ? (
-          <span className="truncate text-sm font-medium">{item.label}</span>
+          <span className={cn("truncate text-sm", active ? "font-bold" : "font-medium")}>
+            {item.label}
+          </span>
         ) : null}
       </div>
     );
@@ -159,8 +197,8 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="shrink-0 md:flex md:h-screen md:flex-col">
-      <div className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur-md md:hidden">
+    <div className="flex h-14 shrink-0 flex-col md:h-dvh md:max-h-dvh md:shrink-0">
+      <div className="z-50 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur-md md:hidden">
         <Button
           type="button"
           variant="ghost"
@@ -186,7 +224,7 @@ export default function Sidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[min(100%,18rem)] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground shadow-lg transition-transform duration-300 ease-out md:static md:z-auto md:h-screen md:translate-x-0 md:shadow-none",
+          "fixed inset-y-0 left-0 z-50 flex w-[min(100%,18rem)] max-h-dvh flex-col border-r border-sidebar-border bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 text-sidebar-foreground shadow-xl shadow-slate-900/40 transition-transform duration-300 ease-out md:relative md:z-auto md:h-full md:max-h-dvh md:translate-x-0",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           collapsed ? "md:w-[4.5rem]" : "md:w-64"
         )}
@@ -228,7 +266,7 @@ export default function Sidebar() {
 
         <ScrollArea className="flex-1 min-h-0">
           <nav className="px-2 py-4">
-            <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2 px-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
               {!collapsed ? "Navigate" : ""}
             </p>
             <ul className="space-y-1">

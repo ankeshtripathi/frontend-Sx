@@ -2,6 +2,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import api, { getApiErrorMessage, unwrapApiData } from '../../api/axios'
 import { setPermissions } from '../permissions/permissionsSlice'
+import { clearResumeUpload } from '../resumeUpload/resumeUploadSlice'
 
 // decode JWT safely (base64url)
 const decodeJwt = (token) => {
@@ -57,7 +58,16 @@ export const login = createAsyncThunk(
 
       dispatch(setPermissions([]))
 
-      return { user: data.user || decodeJwt(token) || null }
+      const user = data.user || decodeJwt(token) || null
+      if (user?.email) {
+        try {
+          localStorage.setItem('ats_user_email', user.email)
+        } catch {
+          /* ignore */
+        }
+      }
+
+      return { user }
     } catch (err) {
       return rejectWithValue(getApiErrorMessage(err, 'Login failed'))
     }
@@ -83,9 +93,16 @@ export const restoreSession = createAsyncThunk(
       dispatch(setPermissions([]))
 
       const claims = decodeJwt(token) || {}
+      let cachedEmail = null
+      try {
+        cachedEmail = localStorage.getItem('ats_user_email')
+      } catch {
+        /* ignore */
+      }
       return {
         id: claims.userId || claims.sub || null,
         tenantId: claims.tenantId || null,
+        email: claims.email || cachedEmail || null,
       }
     } catch (err) {
       localStorage.removeItem('LMS_accessToken')
@@ -96,10 +113,12 @@ export const restoreSession = createAsyncThunk(
 
 export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   localStorage.removeItem('LMS_accessToken')
+  localStorage.removeItem('ats_user_email')
   if (api?.defaults?.headers?.common) {
     delete api.defaults.headers.common['Authorization']
   }
   dispatch(setPermissions([]))
+  dispatch(clearResumeUpload())
   return null
 })
 
@@ -127,7 +146,7 @@ const slice = createSlice({
         state.loading = false
         state.error = null
         state.initialized = true
-        state.user = action.payload.user || action.payload
+        state.user = action.payload?.user ?? action.payload
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false

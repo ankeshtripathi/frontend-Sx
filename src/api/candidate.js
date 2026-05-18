@@ -16,6 +16,11 @@ export async function getCandidates(params = {}) {
   return unwrapApiData(res);
 }
 
+export async function deleteCandidate(id) {
+  const res = await api.delete(`/candidates/${id}`);
+  return unwrapApiData(res);
+}
+
 function stripEmptyParams(raw) {
   const out = {};
   for (const [k, v] of Object.entries(raw)) {
@@ -65,5 +70,10 @@ export async function matchJD(file, options = {}) {
 
 export async function getJobStatus(jobId) {
   const res = await api.get(`/candidates/upload/jobs/${jobId}`);
+  return unwrapApiData(res);
+}
+
+export async function getActiveResumeUploadJob() {
+  const res = await api.get("/candidates/upload/jobs/active");
   return unwrapApiData(res);
 }

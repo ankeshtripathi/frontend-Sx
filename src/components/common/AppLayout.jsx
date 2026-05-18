@@ -2,7 +2,17 @@ import React, { useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Sidebar from "./Sidebar";
+import ResumeUploadPoller from "@/components/candidates/ResumeUploadPoller";
 import { Badge } from "@/components/ui/badge";
+
+function getHeaderUserLabel(user) {
+  if (!user || typeof user !== "object") return null;
+  const email = typeof user.email === "string" ? user.email.trim() : "";
+  if (email && email.includes("@")) return email;
+  const name = typeof user.name === "string" ? user.name.trim() : "";
+  if (name) return name;
+  return null;
+}
 
 const routeTitle = (pathname) => {
   if (pathname === "/" || pathname === "/dashboard") return "Overview";
@@ -22,36 +32,34 @@ export default function AppLayout() {
     [location.pathname]
   );
 
-  const display =
-    user?.email ||
-    user?.name ||
-    (user?.id != null ? `User #${user.id}` : null);
+  const userLabel = getHeaderUserLabel(user);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row w-full bg-muted/40">
+    <div className="workspace-shell flex h-dvh max-h-dvh w-full flex-col overflow-hidden md:flex-row">
+      <ResumeUploadPoller />
       <Sidebar />
 
-      <div className="flex min-h-0 flex-1 min-w-0 flex-col">
-        <header className="sticky top-0 z-30 hidden border-b border-border/80 bg-background/80 px-4 py-3 backdrop-blur-md md:flex md:items-center md:justify-between md:gap-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 hidden shrink-0 border-b border-slate-200/80 bg-white/90 px-4 py-3.5 shadow-sm shadow-slate-200/40 backdrop-blur-xl md:flex md:items-center md:justify-between md:gap-4 md:px-8">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Workspace
             </p>
-            <h1 className="text-lg font-semibold tracking-tight text-foreground">
-              {title}
-            </h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">{title}</h1>
           </div>
-          {display ? (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="font-normal">
-                {display}
-              </Badge>
-            </div>
+          {userLabel ? (
+            <Badge
+              variant="secondary"
+              className="max-w-[260px] truncate font-normal text-slate-700"
+              title={userLabel}
+            >
+              {userLabel}
+            </Badge>
           ) : null}
         </header>
 
-        <main className="flex min-h-0 flex-1 min-w-0 flex-col">
-          <div className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 md:px-8 md:py-8">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain">
+          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
         </main>

@@ -4,6 +4,7 @@ import authReducer from './auth/authSlice'
 import permissionsReducer from './permissions/permissionsSlice'
 import rolesReducer from './roles/rolesSlice'
 import usersReducer from './users/usersSlice'
+import resumeUploadReducer from './resumeUpload/resumeUploadSlice'
 
 const isDev = import.meta.env.DEV
 
@@ -13,6 +14,7 @@ const store = configureStore({
     permissions: permissionsReducer,
     roles: rolesReducer,
     users: usersReducer,
+    resumeUpload: resumeUploadReducer,
   },
   devTools: isDev,
   middleware: (getDefaultMiddleware) =>

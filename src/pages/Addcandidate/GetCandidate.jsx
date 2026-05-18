@@ -1,6 +1,19 @@
 import React, { useMemo, useState } from "react";
 import useCandidatesQuery from "@/hooks/useCandidatesQuery";
-import InfoItem from "@/components/InfoItem";
+import { formatSkills, getSkills } from "@/lib/candidate-format";
+import CandidateAvatar from "@/components/workspace/CandidateAvatar";
+import CandidateProfileDialog from "@/components/workspace/CandidateProfileDialog";
+import PageHero from "@/components/workspace/PageHero";
+import MetricStatCard from "@/components/workspace/MetricStatCard";
+import WorkspacePage from "@/components/workspace/WorkspacePage";
+import {
+  WORKSPACE_TABLE_CLASS,
+  WORKSPACE_TABLE_MIN_WIDTH_CLASS,
+  WORKSPACE_TABLE_SCROLL_CLASS,
+} from "@/components/workspace/workspace-table";
+import { cn } from "@/lib/utils";
+import EmptyState from "@/components/workspace/EmptyState";
+import AlertBanner from "@/components/workspace/AlertBanner";
 
 import {
   Table,
@@ -38,7 +51,6 @@ import {
 } from "@/components/ui/select";
 import {
   BriefcaseBusiness,
-  CheckCircle2,
   Filter,
   ListFilter,
   Loader2,
@@ -51,36 +63,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-
-function formatSkills(skills) {
-  if (skills == null || skills === "") return "—";
-  if (Array.isArray(skills)) return skills.length ? skills.join(", ") : "—";
-  if (typeof skills === "string") return skills || "—";
-  try {
-    return JSON.stringify(skills);
-  } catch {
-    return "—";
-  }
-}
-
-function getSkills(skills) {
-  if (Array.isArray(skills)) return skills.filter(Boolean);
-  return String(skills || "")
-    .split(",")
-    .map((skill) => skill.trim())
-    .filter(Boolean);
-}
-
-function formatDate(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 const ADVANCED_KEYS = [
   "hometown",
@@ -106,22 +88,6 @@ function countAllActive(filters) {
     const v = filters[k];
     return n + (v !== undefined && v !== null && String(v).trim() !== "" ? 1 : 0);
   }, 0);
-}
-
-function CandidateAvatar({ name }) {
-  const initials = String(name || "C")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-      {initials || "C"}
-    </span>
-  );
 }
 
 const FILTER_LABELS = {
@@ -251,23 +217,6 @@ function CandidateFiltersForm({ filters, setFilters }) {
         {field("Qualification", "qualification")}
       </FilterSection>
     </div>
-  );
-}
-
-function StatCard({ title, value, hint, icon: Icon }) {
-  return (
-    <Card className="overflow-hidden border-border/80 shadow-sm">
-      <CardContent className="flex items-center gap-3 p-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
-          <p className="truncate text-xs text-muted-foreground">{title}</p>
-          {hint ? <p className="truncate text-[11px] text-muted-foreground/80">{hint}</p> : null}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -402,47 +351,23 @@ const GetCandidate = () => {
   );
 
   return (
-    <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[2rem] bg-slate-950 px-5 py-6 text-white shadow-xl sm:px-8 lg:px-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.28),transparent_32%)]" />
-        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-3xl space-y-4">
-            <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">
-              Candidate search console
-            </Badge>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Find the right candidate faster with structured filters.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
-                Search by name, contact, skills, location, experience, company,
-                designation, department, and qualification using one guided workspace.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[34rem]">
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-              <p className="text-2xl font-semibold tabular-nums">{pagination.total ?? 0}</p>
-              <p className="text-xs text-white/70">Matching candidates</p>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-              <p className="text-2xl font-semibold tabular-nums">{filtersActiveCount}</p>
-              <p className="text-xs text-white/70">Active filters</p>
-            </div>
-            <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
-              <p className="text-2xl font-semibold tabular-nums">{items.length}</p>
-              <p className="text-xs text-white/70">Visible rows</p>
-            </div>
-          </div>
-        </div>
-      </section>
+    <WorkspacePage>
+      <PageHero
+        eyebrow="Candidate search"
+        title="Find the right candidate faster"
+        description="Filter by name, contact, skills, location, experience, company, designation, department, and qualification."
+        stats={[
+          { label: "Matching", value: pagination.total ?? 0 },
+          { label: "Active filters", value: filtersActiveCount },
+          { label: "On this page", value: items.length },
+        ]}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total matches" value={pagination.total ?? 0} hint="Server result count" icon={SearchCheck} />
-        <StatCard title="Visible now" value={items.length} hint="Current page" icon={Users} />
-        <StatCard title="With email" value={withEmail} hint="Current page" icon={Mail} />
-        <StatCard title="With resume" value={withResume} hint="Current page" icon={BriefcaseBusiness} />
+        <MetricStatCard variant="compact" title="Total matches" value={pagination.total ?? 0} hint="Server count" icon={SearchCheck} tone="emerald" />
+        <MetricStatCard variant="compact" title="Visible now" value={items.length} hint="Current page" icon={Users} tone="sky" />
+        <MetricStatCard variant="compact" title="With email" value={withEmail} hint="Current page" icon={Mail} tone="violet" />
+        <MetricStatCard variant="compact" title="With resume" value={withResume} hint="Current page" icon={BriefcaseBusiness} tone="amber" />
       </div>
 
       <div className="flex flex-col gap-3 lg:hidden">
@@ -471,27 +396,25 @@ const GetCandidate = () => {
         <ActiveFilterChips filters={filters} setFilters={setFilters} resetFilters={resetFilters} />
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive" role="alert">
-          {error}
-        </div>
-      )}
+      {error ? <AlertBanner>{error}</AlertBanner> : null}
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <aside className="hidden min-h-[720px] overflow-hidden rounded-2xl border bg-card shadow-sm xl:flex xl:flex-col">
+        <aside className="hidden overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/90 to-white shadow-md xl:sticky xl:top-4 xl:flex xl:max-h-[calc(100dvh-7rem)] xl:min-h-0 xl:w-full xl:flex-col xl:self-start">
           {filterSidebarInner}
         </aside>
 
-        <Card className="min-w-0 overflow-hidden border-border/80 shadow-sm py-0 gap-0">
-          <CardHeader className="border-b bg-muted/30 px-4 py-4 sm:px-6">
+        <Card className="min-w-0 overflow-hidden border-slate-200/90 bg-white py-0 gap-0 shadow-md">
+          <CardHeader className="border-b border-slate-200/80 border-l-4 border-l-emerald-500 bg-gradient-to-r from-emerald-50 to-white px-4 py-4 sm:px-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <SearchCheck className="size-5 text-primary" aria-hidden />
+                <CardTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <span className="flex size-9 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200/80">
+                    <SearchCheck className="size-5" aria-hidden />
+                  </span>
                   Filtered candidates
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Click a candidate to view the complete profile and resume details.
+                  Click a candidate to view the complete profile. Scroll horizontally to see all columns.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -515,10 +438,15 @@ const GetCandidate = () => {
             </div>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-col p-0">
-            <ScrollArea className="h-[min(660px,calc(100dvh-18rem))] w-full">
-              <Table>
+            <div
+              className={cn(
+                WORKSPACE_TABLE_SCROLL_CLASS,
+                "h-[min(660px,calc(100dvh-18rem))]"
+              )}
+            >
+              <Table className={cn(WORKSPACE_TABLE_CLASS, WORKSPACE_TABLE_MIN_WIDTH_CLASS)}>
                 <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableRow className="hover:bg-transparent">
                     <TableHead className="min-w-[240px]">Candidate</TableHead>
                     <TableHead className="min-w-[220px]">Contact</TableHead>
                     <TableHead className="min-w-[190px]">Current role</TableHead>
@@ -544,7 +472,7 @@ const GetCandidate = () => {
                             >
                               <CandidateAvatar name={c.name} />
                               <span className="min-w-0">
-                                <span className="block truncate font-semibold text-foreground hover:text-primary">
+                                <span className="block truncate font-bold text-slate-900 hover:text-emerald-600">
                                   {c.name || "Unnamed candidate"}
                                 </span>
                                 <span className="mt-1 block truncate text-xs text-muted-foreground">
@@ -650,7 +578,7 @@ const GetCandidate = () => {
                   )}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
             {paginationBar}
           </CardContent>
         </Card>
@@ -680,137 +608,16 @@ const GetCandidate = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden rounded-2xl gap-0">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Candidate profile</DialogTitle>
-          </DialogHeader>
-          {selectedCandidate && (
-            <div className="flex flex-col max-h-[85vh]">
-              <div className="relative overflow-hidden bg-slate-950 p-6 text-white">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.35),transparent_36%)]" />
-                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="flex items-center gap-4">
-                    <CandidateAvatar name={selectedCandidate.name} />
-                    <div>
-                      <h2 className="text-2xl font-semibold tracking-tight">
-                        {selectedCandidate.name || "Unnamed Candidate"}
-                      </h2>
-                      <p className="mt-1 text-sm text-white/75">
-                        {selectedCandidate.currentDesignation || "Designation not added"} ·{" "}
-                        {selectedCandidate.currentCompany || "Company not added"}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedCandidate.resumeUrl ? (
-                    <Button className="bg-white text-slate-950 hover:bg-white/90" asChild>
-                      <a href={selectedCandidate.resumeUrl} target="_blank" rel="noreferrer">
-                        View resume
-                      </a>
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-
-              <ScrollArea className="min-h-0 flex-1 bg-muted/30">
-                <div className="space-y-5 p-5 sm:p-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="shadow-sm">
-                      <CardContent className="flex items-center gap-3 p-4">
-                        <Mail className="size-5 text-primary" aria-hidden />
-                        <InfoItem label="Email" value={selectedCandidate.email} />
-                      </CardContent>
-                    </Card>
-                    <Card className="shadow-sm">
-                      <CardContent className="flex items-center gap-3 p-4">
-                        <BriefcaseBusiness className="size-5 text-primary" aria-hidden />
-                        <InfoItem
-                          label="Experience"
-                          value={
-                            selectedCandidate.totalExperienceYears
-                              ? `${selectedCandidate.totalExperienceYears} yrs`
-                              : "—"
-                          }
-                        />
-                      </CardContent>
-                    </Card>
-                    <Card className="shadow-sm">
-                      <CardContent className="flex items-center gap-3 p-4">
-                        <MapPin className="size-5 text-primary" aria-hidden />
-                        <InfoItem label="Location" value={selectedCandidate.currentLocation} />
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Card className="shadow-sm">
-                      <CardHeader>
-                        <CardTitle className="text-base">Basic details</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid gap-4 sm:grid-cols-2">
-                        <InfoItem label="Phone" value={selectedCandidate.phone} />
-                        <InfoItem label="Department" value={selectedCandidate.department} />
-                        <InfoItem label="Industry" value={selectedCandidate.industry} />
-                        <InfoItem label="Qualification" value={selectedCandidate.qualification} />
-                      </CardContent>
-                    </Card>
-
-                    <Card className="shadow-sm">
-                      <CardHeader>
-                        <CardTitle className="text-base">Compensation</CardTitle>
-                      </CardHeader>
-                      <CardContent className="grid gap-4 sm:grid-cols-2">
-                        <InfoItem label="Current Salary" value={selectedCandidate.currentSalary} />
-                        <InfoItem label="Expected Salary" value={selectedCandidate.expectedSalary} />
-                        <InfoItem label="Created" value={formatDate(selectedCandidate.createdAt)} />
-                        <InfoItem label="Candidate ID" value={selectedCandidate.id} />
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <Card className="shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-base">Location preferences</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-3">
-                      <InfoItem label="Current" value={selectedCandidate.currentLocation} />
-                      <InfoItem label="Preferred" value={selectedCandidate.preferredLocation} />
-                      <InfoItem
-                        label="Hometown"
-                        value={[selectedCandidate.hometown, selectedCandidate.pincode]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card className="shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-base">Skills</CardTitle>
-                      <CardDescription>Parsed skills from candidate data.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2">
-                        {getSkills(selectedCandidate.skills).length ? (
-                          getSkills(selectedCandidate.skills).map((skill) => (
-                            <Badge key={skill} variant="secondary" className="gap-1.5 font-normal">
-                              <CheckCircle2 className="size-3" aria-hidden />
-                              {skill}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">No skills parsed.</span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+      <CandidateProfileDialog
+        candidate={selectedCandidate}
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        onDeleted={() => {
+          setSelectedCandidate(null);
+          reload();
+        }}
+      />
+    </WorkspacePage>
   );
 };
 
