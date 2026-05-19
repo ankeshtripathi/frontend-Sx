@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { name: "Resume upload", path: "/dashboard/candidates", icon: FileUp, tone: "sky" },
   { name: "Browse candidates", path: "/dashboard/get-candidates", icon: Users, tone: "violet" },
-  { name: "CSV import", path: "/candidate/upload-csv", icon: FileSpreadsheet, tone: "emerald" },
+  { name: "CSV upload", path: "/candidate/upload-csv", icon: FileSpreadsheet, tone: "emerald" },
 ];
 
 const tabTone = {

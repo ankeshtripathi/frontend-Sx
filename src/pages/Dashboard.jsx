@@ -96,7 +96,7 @@ export default function Dashboard() {
             </HeroPrimaryButton>
             <HeroGhostButton onClick={() => navigate("/candidate/upload-csv")}>
               <FileSpreadsheet className="size-4" aria-hidden />
-              Import CSV
+              Upload CSV
             </HeroGhostButton>
             <HeroGhostButton onClick={() => navigate("/dashboard/jobs")}>
               <Sparkles className="size-4" aria-hidden />
@@ -169,7 +169,7 @@ export default function Dashboard() {
                   variant="outline"
                   onClick={() => navigate("/candidate/upload-csv")}
                 >
-                  Import CSV
+                  Upload CSV
                 </Button>
               </div>
             }

@@ -36,7 +36,7 @@ const AddCandidate = () => {
           onClick={() => navigate("/candidate/upload-csv")}
         >
           <FileSpreadsheet className="size-4" aria-hidden />
-          Import candidates from CSV instead
+          Upload candidates from CSV instead
         </Button>
       </div>
     </WorkspacePage>

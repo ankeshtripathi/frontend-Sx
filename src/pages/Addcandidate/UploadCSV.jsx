@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { getApiErrorMessage } from "@/api/axios";
 import { uploadCsv } from "@/api/candidate";
+import PageHero from "@/components/workspace/PageHero";
+import WorkspacePage from "@/components/workspace/WorkspacePage";
+import CandidateWorkspaceTabs from "@/components/workspace/CandidateWorkspaceTabs";
+import ContentPanel from "@/components/workspace/ContentPanel";
+import { Button } from "@/components/ui/button";
+import { FileSpreadsheet } from "lucide-react";
 
 const UploadCSV = () => {
   const [file, setFile] = useState(null);
@@ -32,78 +38,84 @@ const UploadCSV = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl">
-      <h2 className="text-xl font-semibold mb-2">Upload Candidates CSV</h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Upload a CSV with candidate details. The backend maps common headers like name, email, phone, and experience.
-      </p>
-
-      <input
-        type="file"
-        accept=".csv"
-        onChange={(e) => setFile(e.target.files[0])}
-        className="mb-4"
+    <WorkspacePage>
+      <PageHero
+        eyebrow="Add candidates"
+        title="Upload candidates via CSV"
+        description="Upload a CSV with candidate details. The backend maps common headers like name, email, phone, and experience."
       />
 
-      {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      <CandidateWorkspaceTabs />
 
-      <button
-        onClick={handleUpload}
-        disabled={uploading || !file}
-        className="bg-green-600 text-white px-4 py-2 rounded disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {uploading ? "Processing..." : "Upload CSV"}
-      </button>
+      <ContentPanel accent="emerald" title="CSV file" icon={FileSpreadsheet}>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          className="mb-4 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+        />
 
-      {result && (
-        <div className="mt-6 rounded border bg-white p-4 shadow-sm">
-          <div className="grid gap-3 text-sm md:grid-cols-5">
-            <Stat label="Total" value={result.total || 0} />
-            <Stat label="Created" value={result.created || 0} />
-            <Stat label="Duplicate" value={result.duplicate || 0} />
-            <Stat label="Skipped" value={result.skipped || 0} />
-            <Stat label="Errors" value={result.error || 0} />
+        {error ? (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
           </div>
+        ) : null}
 
-          {Array.isArray(result.results) && result.results.length > 0 && (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-gray-500">
-                    <th className="py-2 pr-4">Row</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 pr-4">Email</th>
-                    <th className="py-2 pr-4">Message</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.results.map((row) => (
-                    <tr key={row.row} className="border-b last:border-0">
-                      <td className="py-2 pr-4">{row.row}</td>
-                      <td className="py-2 pr-4">{row.status}</td>
-                      <td className="py-2 pr-4">{row.email || "-"}</td>
-                      <td className="py-2 pr-4">{row.reason || row.error || "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <Button
+          type="button"
+          onClick={handleUpload}
+          disabled={uploading || !file}
+          className="bg-emerald-600 hover:bg-emerald-700"
+        >
+          {uploading ? "Processing..." : "Upload CSV"}
+        </Button>
+
+        {result ? (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+            <div className="grid gap-3 text-sm md:grid-cols-5">
+              <Stat label="Total" value={result.total || 0} />
+              <Stat label="Created" value={result.created || 0} />
+              <Stat label="Duplicate" value={result.duplicate || 0} />
+              <Stat label="Skipped" value={result.skipped || 0} />
+              <Stat label="Errors" value={result.error || 0} />
             </div>
-          )}
-        </div>
-      )}
-    </div>
+
+            {Array.isArray(result.results) && result.results.length > 0 ? (
+              <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-slate-50 text-left text-slate-500">
+                      <th className="px-4 py-2">Row</th>
+                      <th className="px-4 py-2">Status</th>
+                      <th className="px-4 py-2">Email</th>
+                      <th className="px-4 py-2">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.results.map((row) => (
+                      <tr key={row.row} className="border-b last:border-0">
+                        <td className="px-4 py-2">{row.row}</td>
+                        <td className="px-4 py-2">{row.status}</td>
+                        <td className="px-4 py-2">{row.email || "-"}</td>
+                        <td className="px-4 py-2">{row.reason || row.error || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </ContentPanel>
+    </WorkspacePage>
   );
 };
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded bg-gray-50 p-3">
-      <div className="text-gray-500">{label}</div>
-      <div className="text-lg font-semibold">{value}</div>
+    <div className="rounded-lg border border-slate-200 bg-white p-3">
+      <div className="text-slate-500">{label}</div>
+      <div className="text-lg font-semibold text-slate-900">{value}</div>
     </div>
   );
 }

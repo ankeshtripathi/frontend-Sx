@@ -408,41 +408,14 @@ return ( <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden 
 </section>
 
  <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row items-center gap-12">
-
-        {/* ================= LEFT IMAGE ================= */}
-        <div className="w-full lg:w-1/2 flex justify-center relative">
-
-          {/* Background Shape */}
-          <div className="absolute w-[320px] h-[320px] bg-gradient-to-tr from-purple-500 to-blue-500 rounded-2xl rotate-6 z-0"></div>
-
-          {/* Image */}
-          <img
-            src="/ankesh.png"
-            alt="Ankesh"
-            className="relative z-10 w-[280px] md:w-[340px] rounded-2xl shadow-xl object-cover"
-          />
-
-          {/* Floating Icons */}
-          <div className="absolute top-5 left-5 bg-white p-3 rounded-full shadow">
-            💼
-          </div>
-
-          <div className="absolute bottom-5 right-5 bg-white p-3 rounded-full shadow">
-            🌐
-          </div>
-
-        </div>
-
-        {/* ================= RIGHT CONTENT ================= */}
-        <div className="w-full lg:w-1/2 text-center lg:text-left">
-
+      <div className="max-w-7xl mx-auto px-4 flex justify-center">
+        <div className="w-full max-w-2xl text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             <span className="text-orange-500">Find</span> Your <br />
             Perfect Job
           </h2>
 
-          <p className="text-gray-600 mb-8 max-w-md mx-auto lg:mx-0">
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">
             To start searching for jobs, attend job fairs, explore online
             job portals, or connect directly with recruiters to grow your network.
           </p>
@@ -450,9 +423,7 @@ return ( <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden 
           <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">
             Get Started
           </Button>
-
         </div>
-
       </div>
     </section>
 
