@@ -7,7 +7,29 @@ import WorkspacePage from "@/components/workspace/WorkspacePage";
 import CandidateWorkspaceTabs from "@/components/workspace/CandidateWorkspaceTabs";
 import ContentPanel from "@/components/workspace/ContentPanel";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FileSpreadsheet } from "lucide-react";
+
+/** Documented columns the backend maps (aliases like city→location also work). */
+const SUPPORTED_COLUMNS = [
+  "name",
+  "email",
+  "phone",
+  "experience",
+  "skills",
+  "location / current_location",
+  "preferred_location",
+  "hometown",
+  "pincode",
+  "company",
+  "designation",
+  "department",
+  "industry",
+  "qualification",
+  "current_salary",
+  "expected_salary",
+  "notice_period",
+];
 
 const UploadCSV = () => {
   const [file, setFile] = useState(null);
@@ -27,7 +49,9 @@ const UploadCSV = () => {
     try {
       const data = await uploadCsv(file);
       setResult(data);
-      toast.success("CSV processed");
+      toast.success(
+        `CSV processed: ${data?.created ?? 0} created, ${data?.duplicate ?? 0} duplicate`
+      );
     } catch (err) {
       const message = getApiErrorMessage(err, "CSV upload failed");
       setError(message);
@@ -42,12 +66,36 @@ const UploadCSV = () => {
       <PageHero
         eyebrow="Add candidates"
         title="Upload candidates via CSV"
-        description="Upload a CSV with candidate details. The backend maps common headers like name, email, phone, and experience."
+        description="Import full profiles — name, contact, skills, location, company, designation, and more. Email is required on every row."
       />
 
       <CandidateWorkspaceTabs />
 
       <ContentPanel accent="emerald" title="CSV file" icon={FileSpreadsheet}>
+        <div className="mb-5 rounded-xl border border-emerald-200/80 bg-emerald-50/60 p-4">
+          <p className="text-sm font-semibold text-emerald-950">
+            Supported columns
+          </p>
+          <p className="mt-1 text-xs font-medium text-emerald-800/80">
+            Header names are flexible (e.g.{" "}
+            <code className="rounded bg-white/70 px-1">city</code>,{" "}
+            <code className="rounded bg-white/70 px-1">key_skills</code>,{" "}
+            <code className="rounded bg-white/70 px-1">mobile</code>). Skills can be
+            comma-separated.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {SUPPORTED_COLUMNS.map((col) => (
+              <Badge
+                key={col}
+                variant="secondary"
+                className="border-emerald-200 bg-white font-medium text-emerald-900"
+              >
+                {col}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
         <input
           type="file"
           accept=".csv"
@@ -88,6 +136,8 @@ const UploadCSV = () => {
                       <th className="px-4 py-2">Row</th>
                       <th className="px-4 py-2">Status</th>
                       <th className="px-4 py-2">Email</th>
+                      <th className="px-4 py-2">Location</th>
+                      <th className="px-4 py-2">Skills</th>
                       <th className="px-4 py-2">Message</th>
                     </tr>
                   </thead>
@@ -97,6 +147,10 @@ const UploadCSV = () => {
                         <td className="px-4 py-2">{row.row}</td>
                         <td className="px-4 py-2">{row.status}</td>
                         <td className="px-4 py-2">{row.email || "-"}</td>
+                        <td className="px-4 py-2">{row.currentLocation || "-"}</td>
+                        <td className="px-4 py-2 tabular-nums">
+                          {row.skillsCount != null ? row.skillsCount : "-"}
+                        </td>
                         <td className="px-4 py-2">{row.reason || row.error || "-"}</td>
                       </tr>
                     ))}
